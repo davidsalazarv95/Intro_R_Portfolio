@@ -1,0 +1,71 @@
+---
+title: "Extracting and transforming"
+output: html_notebook
+---
+
+The quantmod workflow resumes in getSymbols in a new environment and with auto.assign = TRUE, such that all the Symbols are downloaded as different objects and we can interate over them with the eapply function. Thus, it's with the function that we operate over each symbol, and then join the results with the do.call() over the result of the eapply. 
+
+```{r}
+library(quantmod)
+library(xts)
+```
+
+```{r}
+getSymbols("GOOG", src = "yahoo", from = "2008-01-01", to = "2010-01-01")
+scaled <- apply.daily(GOOG, function(x) x/coredata(GOOG[1,])*100)
+autoplot.zoo(Cl(scaled))
+```
+
+```{r}
+gdp <- Quandl("FRED/GDP", type = "xts", start_date = "2007-01-01", end_date = "2010-01-01")
+autoplot.zoo(gdp) +
+  scale_x_yearqtr()
+```
+
+Quandl allows you to skip the xts manipulation to collapse time series to lower frequencies. For example, to get monthly price for google:
+
+```{r}
+google <- Quandl("YAHOO/GOOG", type = "xts", collapse = "monthly")
+head(Cl(google))
+```
+
+Compare with:
+
+```{r}
+google <- Quandl("YAHOO/GOOG", type = "xts", collapse = "daily")
+head(Cl(to.period(google, period = "months"))) # note 
+```
+
+Quandl also supports a lot of transformation techniques after it has been transformed. For example, for the GDP plot normalized: 
+
+```{r}
+gdp <- Quandl("FRED/GDP", type = "xts", transform = "normalize", start_date = "2007-01-01", end_date = "2009-01-01")
+autoplot.zoo(gdp) +
+  scale_x_yearqtr(format = "%Y-Q%q")
+```
+
+More programmatically, imagine downloading multiple symbols and extracting the adjusted price for all of them. All with quantmod workflow of working with environments 
+
+```{r}
+data_env <- new.env()
+getSymbols(c("SPY", "QQQ", "ACWI", "XSD"), env = data_env, auto.assign = TRUE)
+adjusted <- eapply(data_env, Ad)
+adjusted_all <- do.call(what = merge, c(adjusted, join = "inner"))
+cum_tot_return <- apply.daily(adjusted_all, function(x) x/coredata(adjusted_all[1,])*100)
+autoplot.zoo(cum_tot_return, facets = NULL)
+chart_Series(cum_tot_return)
+```
+
+You can also use Quandl to obtain returns as just another transformation. For example:
+
+```{r}
+datos <- Quandl(c("CME/CLH2016","CME/BZH2016"), type = "xts", collapse = "weekly", transform = "rdiff")
+datos <- getPrice(datos, prefer = "Settle")
+datos <- na.omit(datos)
+autoplot.zoo(datos, facets = NULL)
+chartSeries(datos)
+```
+
+
+
+

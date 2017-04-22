@@ -1,0 +1,58 @@
+---
+title: "Get Data"
+output: html_notebook
+---
+
+# getSymbols
+
+An unified interface to obtain data from multiple sources. 
+
+```{r}
+library(quantmod)
+apple <- getSymbols(Symbols = "AAPL", src = "yahoo", auto.assign = FALSE)
+head(apple)
+```
+
+The objects can be auto assigned to the environment.
+
+```{r}
+getSymbols("QQQ", src = "google")
+getSymbols("SPY")
+getSymbols("GDP", src = "FRED")
+```
+
+```{r}
+autoplot.zoo(merge.xts(apple$AAPL.Adjusted, SPY$SPY.Close), facets = NULL)
+```
+
+# Quandl
+
+Another option is to download the data from the Internet via the Quandl API.
+
+```{r}
+gdp <- Quandl("FRED/GDP", type = "xts")
+autoplot.zoo(gdp)
+```
+
+ 
+##
+
+```{r}
+getSymbols("^BVSP")
+autoplot.zoo(BVSP$BVSP.Close)
+```
+
+## From OHLC to what you need
+
+The Quantmod package has the necessary tools to extract the columns you need. Starting with the initials in uppercase:
+
+```{r}
+autoplot.zoo(cbind(Cl(BVSP), Hi(BVSP)), facets = NULL) # Close and High
+```
+
+With tick data you can use getPrice:
+
+```{r}
+autoplot(getPrice(apple))
+```
+

@@ -1,0 +1,56 @@
+---
+title: "Managing Data from multiple sources"
+output: html_notebook
+---
+
+Under the hood, getSymbols uses a different method for each source. For example, getSymbols.FRED. But we shouldn't use these methods directly. To change the default source:
+
+```{r}
+library(quantmod)
+library(Quandl)
+```
+
+```{r}
+setDefaults(getSymbols, src = "FRED")
+```
+
+To change the default for some specific date for yahoo
+
+```{r}
+args(getSymbols.yahoo)
+```
+
+```{r}
+setDefaults(getSymbols.yahoo, from = "2016-01-01", to = "2016-12-31")
+```
+
+```{r}
+getDefaults(getSymbols)
+```
+
+By symbol default:
+
+```{r}
+setSymbolLookup(GDP = "FRED")
+getSymbols("GDP")
+str(GDP)
+```
+
+```{r}
+setSymbolLookup(MSFT = list(src = "google", from = "2016-01-01"))
+```
+
+```{r}
+saveSymbolLookup(file = "my_symbol_lookup.rda")
+loadSymbolLookup(file = "my_symbol_lookup.rda")
+```
+
+For changing default names for the ticker:
+
+```{r}
+setDefaults(getSymbols, src = "yahoo")
+setSymbolLookup(SSE = list(name = "000001.SS"),
+                FORD = list(name = "F"))
+getSymbols(c("SSE", "FORD"))
+```
+
